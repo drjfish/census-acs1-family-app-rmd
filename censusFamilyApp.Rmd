@@ -1,0 +1,749 @@
+---
+title: "d4ph_censusAnalysis2"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+
+# Load necessary libraries
+library(tidycensus)
+library(dplyr)
+library(tidyr)
+
+```
+
+```{r}
+
+# Set parameters
+# Set your Census API key
+census_api_key("YOUR_CENSUS_API_KEY")
+
+# Define the year and survey type
+survey <- "acs1"
+# Define the years you want-pull data for
+years <- c(2011, 2013, 2015, 2017, 2019, 2021, 2023)
+
+
+# Define variables to pull from the Census API
+variables <- c(
+
+# S1201 marital status
+  "B12002_004E", # male, never married, 15-17 years
+  "B12002_005E", # male, never married, 18-19 years
+  "B12002_006E", # male, never married, 20-24 years
+  "B12002_007E", # male, never married, 25-29 years
+  "B12002_008E", # male, never married, 30-34 years
+  "B12002_009E", # male, never married, 35-39 years
+  "B12002_010E", # male, never married, 40-44 years
+  "B12002_011E", # male, never married, 45-49 years
+  "B12002_012E", # male, never married, 50-54 years
+  "B12002_013E", # male, never married, 55-59 years
+  "B12002_014E", # male, never married, 60-64 years
+  "B12002_015E", # male, never married, 65-74 years
+  "B12002_016E", # male, never married, 75-84 years
+  "B12002_017E", # male, never married, 85+ years
+  "B12002_020E", # male, married, 15-17 years
+  "B12002_021E", # male, married, 18-19 years
+  "B12002_022E", # male, married, 20-24 years
+  "B12002_023E", # male, married, 25-29 years
+  "B12002_024E", # male, married, 30-34 years
+  "B12002_025E", # male, married, 35-39 years
+  "B12002_026E", # male, married, 40-44 years
+  "B12002_027E", # male, married, 45-49 years
+  "B12002_028E", # male, married, 50-54 years
+  "B12002_029E", # male, married, 55-59 years
+  "B12002_030E", # male, married, 60-64 years
+  "B12002_031E", # male, married, 65-74 years
+  "B12002_032E", # male, married, 75-84 years
+  "B12002_033E", # male, married, 85+ years
+  "B12002_036E", # male, separated, 15-17 years
+  "B12002_037E", # male, separated, 18-19 years
+  "B12002_038E", # male, separated, 20-24 years
+  "B12002_039E", # male, separated, 25-29 years
+  "B12002_040E", # male, separated, 30-34 years
+  "B12002_041E", # male, separated, 35-39 years
+  "B12002_042E", # male, separated, 40-44 years
+  "B12002_043E", # male, separated, 45-49 years
+  "B12002_044E", # male, separated, 50-54 years
+  "B12002_045E", # male, separated, 55-59 years
+  "B12002_046E", # male, separated, 60-64 years
+  "B12002_047E", # male, separated, 65-74 years
+  "B12002_048E", # male, separated, 75-84 years
+  "B12002_049E", # male, separated, 85+ years
+  "B12002_066E", # male, widowed, 15-17 years
+  "B12002_067E", # male, widowed, 18-19 years
+  "B12002_068E", # male, widowed, 20-24 years
+  "B12002_069E", # male, widowed, 25-29 years
+  "B12002_070E", # male, widowed, 30-34 years
+  "B12002_071E", # male, widowed, 35-39 years
+  "B12002_072E", # male, widowed, 40-44 years
+  "B12002_073E", # male, widowed, 45-49 years
+  "B12002_074E", # male, widowed, 50-54 years
+  "B12002_075E", # male, widowed, 55-59 years
+  "B12002_076E", # male, widowed, 60-64 years
+  "B12002_077E", # male, widowed, 65-74 years
+  "B12002_078E", # male, widowed, 75-84 years
+  "B12002_079E", # male, widowed, 85+ years
+  "B12002_081E", # male, divorced, 15-17 years
+  "B12002_082E", # male, divorced, 18-19 years
+  "B12002_083E", # male, divorced, 20-24 years
+  "B12002_084E", # male, divorced, 25-29 years
+  "B12002_085E", # male, divorced, 30-34 years
+  "B12002_086E", # male, divorced, 35-39 years
+  "B12002_087E", # male, divorced, 40-44 years
+  "B12002_088E", # male, divorced, 45-49 years
+  "B12002_089E", # male, divorced, 50-54 years
+  "B12002_090E", # male, divorced, 55-59 years
+  "B12002_091E", # male, divorced, 60-64 years
+  "B12002_092E", # male, divorced, 65-74 years
+  "B12002_093E", # male, divorced, 75-84 years
+  "B12002_094E", # male, divorced, 85+ years
+  "B12002_097E", # female, never married, 15-17 years
+  "B12002_098E", # female, never married, 18-19 years
+  "B12002_099E", # female, never married, 20-24 years
+  "B12002_100E", # female, never married, 25-29 years
+  "B12002_101E", # female, never married, 30-34 years
+  "B12002_102E", # female, never married, 35-39 years
+  "B12002_103E", # female, never married, 40-44 years
+  "B12002_104E", # female, never married, 45-49 years
+  "B12002_105E", # female, never married, 50-54 years
+  "B12002_106E", # female, never married, 55-59 years
+  "B12002_107E", # female, never married, 60-64 years
+  "B12002_108E", # female, never married, 65-74 years
+  "B12002_109E", # female, never married, 75-84 years
+  "B12002_110E", # female, never married, 85+ years
+  "B12002_113E", # female, married, 15-17 years
+  "B12002_114E", # female, married, 18-19 years
+  "B12002_115E", # female, married, 20-24 years
+  "B12002_116E", # female, married, 25-29 years
+  "B12002_117E", # female, married, 30-34 years
+  "B12002_118E", # female, married, 35-39 years
+  "B12002_119E", # female, married, 40-44 years
+  "B12002_120E", # female, married, 45-49 years
+  "B12002_121E", # female, married, 50-54 years
+  "B12002_122E", # female, married, 55-59 years
+  "B12002_123E", # female, married, 60-64 years
+  "B12002_124E", # female, married, 65-74 years
+  "B12002_125E", # female, married, 75-84 years
+  "B12002_126E", # female, married, 85+ years
+  "B12002_129E", # female, separated, 15-17 years
+  "B12002_130E", # female, separated, 18-19 years
+  "B12002_131E", # female, separated, 20-24 years
+  "B12002_132E", # female, separated, 25-29 years
+  "B12002_133E", # female, separated, 30-34 years
+  "B12002_134E", # female, separated, 35-39 years
+  "B12002_135E", # female, separated, 40-44 years
+  "B12002_136E", # female, separated, 45-49 years
+  "B12002_137E", # female, separated, 50-54 years
+  "B12002_138E", # female, separated, 55-59 years
+  "B12002_139E", # female, separated, 60-64 years
+  "B12002_140E", # female, separated, 65-74 years
+  "B12002_141E", # female, separated, 75-84 years
+  "B12002_142E", # female, separated, 85+ years
+  "B12002_159E", # female, widowed, 15-17 years
+  "B12002_160E", # female, widowed, 18-19 years
+  "B12002_161E", # female, widowed, 20-24 years
+  "B12002_162E", # female, widowed, 25-29 years
+  "B12002_163E", # female, widowed, 30-34 years
+  "B12002_164E", # female, widowed, 35-39 years
+  "B12002_165E", # female, widowed, 40-44 years
+  "B12002_166E", # female, widowed, 45-49 years
+  "B12002_167E", # female, widowed, 50-54 years
+  "B12002_168E", # female, widowed, 55-59 years
+  "B12002_169E", # female, widowed, 60-64 years
+  "B12002_170E", # female, widowed, 65-74 years
+  "B12002_171E", # female, widowed, 75-84 years
+  "B12002_172E", # female, widowed, 85+ years
+  "B12002_174E", # female, divorced, 15-17 years
+  "B12002_175E", # female, divorced, 18-19 years
+  "B12002_176E", # female, divorced, 20-24 years
+  "B12002_177E", # female, divorced, 25-29 years
+  "B12002_178E", # female, divorced, 30-34 years
+  "B12002_179E", # female, divorced, 35-39 years
+  "B12002_180E", # female, divorced, 40-44 years
+  "B12002_181E", # female, divorced, 45-49 years
+  "B12002_182E", # female, divorced, 50-54 years
+  "B12002_183E", # female, divorced, 55-59 years
+  "B12002_184E", # female, divorced, 60-64 years
+  "B12002_185E", # female, divorced, 65-74 years
+  "B12002_186E", # female, divorced, 75-84 years
+  "B12002_187E", # female, divorced, 85+ years
+
+# B09002 marital status by presence and age of own children under 18 years
+  "B09002_003E", # married-couple, child(ren) 0-2 years
+  "B09002_004E", # married-couple, child(ren) 3-4 years
+  "B09002_005E", # married-couple, child(ren) 5 years
+  "B09002_006E", # married-couple, child(ren) 6-11 years
+  "B09002_007E", # married-couple, child(ren) 12-17 years
+  "B09002_010E", # spdad, child(ren) 0-2 years
+  "B09002_011E", # spdad, child(ren) 3-4 years
+  "B09002_012E", # spdad, child(ren) 5 years
+  "B09002_013E", # spdad, child(ren) 6-11 years
+  "B09002_014E", # spdad, child(ren) 12-17 years
+  "B09002_016E", # spmom, child(ren) 0-2 years
+  "B09002_017E", # spmom, child(ren) 3-4 years
+  "B09002_018E", # spmom, child(ren) 5 years
+  "B09002_019E", # spmom, child(ren) 6-11 years
+  "B09002_020E" # spmom, child(ren) 12-17 years
+)
+```
+
+```{r}
+
+# Create function-get the data
+get_acs_data <- function(state, year, variables, survey) {
+    get_acs(
+        geography = ifelse(state == "US", "us", "state"),
+        variables = variables,
+        survey = survey,
+        state = ifelse(state == "US", NULL, state), # If state is "US", set state-NULL
+        year = year
+    )
+}
+
+# Load fips_codes data
+data(fips_codes, package = "tidycensus")
+
+# Create the list of desired states for output
+states <- unique(fips_codes$state)[01:51]
+states <- c(states, "US") # Add "US"-the list of states-get national totals
+
+# Pull data for each state and year in a tryCatch block-skip unavailable state-year combinations)
+acs_data <- lapply(states, function(state) {
+  lapply(years, function(year) {
+    tryCatch({
+      data <- get_acs_data(state, year, variables, survey)
+      data <- data %>% mutate(year = year) # Add year column-the data
+    }, error = function(e) {
+      message(paste("Skipping state", state, "year", year, "due-error:", e$message))
+      data.frame()
+    })
+  }) %>%
+  bind_rows()
+}) %>%
+bind_rows() # Combine the data into a single data frame
+
+```
+
+```{r}
+# Save data as csv file
+write.csv(acs_data, file = "raw_acs_family_data.csv")
+```
+
+```{r}
+
+# Load the raw_acs_data.csv file as a dataframe (separate code chunk to avoid re-running data pull)
+acs_data <- read.csv("raw_acs_family_data.csv")
+
+# Split the data into two dataframes: marital status and marital status by presence and age of own children under 18 years
+marital_status_data <- acs_data %>% filter(substr(variable, 1, 6) == "B12002")
+marital_status_children_data <- acs_data %>% filter(substr(variable, 1, 6) == "B09002")
+
+# Add sex column to marital_status_data
+sex_map <- list(
+  Male = c("B12002_004", "B12002_005", "B12002_006",
+           "B12002_007", "B12002_008", "B12002_009", "B12002_010",
+           "B12002_011", "B12002_012", "B12002_013", "B12002_014",
+           "B12002_015", "B12002_016", "B12002_017", "B12002_020",
+           "B12002_021", "B12002_022", "B12002_023", "B12002_024",
+           "B12002_025", "B12002_026", "B12002_027", "B12002_028",
+           "B12002_029", "B12002_030", "B12002_031", "B12002_032",
+           "B12002_033", "B12002_036", "B12002_037", "B12002_038",
+           "B12002_039", "B12002_040", "B12002_041", "B12002_042",
+           "B12002_043", "B12002_044", "B12002_045", "B12002_046",
+           "B12002_047", "B12002_048", "B12002_049", "B12002_066",
+           "B12002_067", "B12002_068", "B12002_069", "B12002_070",
+           "B12002_071", "B12002_072", "B12002_073", "B12002_074",
+           "B12002_075", "B12002_076", "B12002_077", "B12002_078",
+           "B12002_079", "B12002_081", "B12002_082", "B12002_083",
+           "B12002_084", "B12002_085", "B12002_086", "B12002_087",
+           "B12002_088", "B12002_089", "B12002_090", "B12002_091",
+           "B12002_092", "B12002_093", "B12002_094"),
+  Female = c("B12002_097", "B12002_098", "B12002_099",
+             "B12002_100", "B12002_101", "B12002_102", "B12002_103",
+             "B12002_104", "B12002_105", "B12002_106", "B12002_107",
+             "B12002_108", "B12002_109", "B12002_110", "B12002_113",
+             "B12002_114", "B12002_115", "B12002_116", "B12002_117",
+             "B12002_118", "B12002_119", "B12002_120", "B12002_121",
+             "B12002_122", "B12002_123", "B12002_124", "B12002_125",
+             "B12002_126", "B12002_129", "B12002_130", "B12002_131",
+             "B12002_132", "B12002_133", "B12002_134", "B12002_135",
+             "B12002_136", "B12002_137", "B12002_138", "B12002_139",
+             "B12002_140", "B12002_141", "B12002_142", "B12002_159",
+             "B12002_160", "B12002_161", "B12002_162", "B12002_163",
+             "B12002_164", "B12002_165", "B12002_166", "B12002_167",
+             "B12002_168", "B12002_169", "B12002_170", "B12002_171",
+             "B12002_172", "B12002_174", "B12002_175", "B12002_176",
+             "B12002_177", "B12002_178", "B12002_179", "B12002_180",
+             "B12002_181", "B12002_182", "B12002_183", "B12002_184",
+             "B12002_185", "B12002_186", "B12002_187")
+)
+
+# Define the marital status categories for marital_status_data
+marital_map <- list (
+  neverMarried = c("B12002_004", "B12002_005", "B12002_006", "B12002_007", "B12002_008", "B12002_009", "B12002_010", "B12002_011", "B12002_012", "B12002_013", "B12002_014", "B12002_015", "B12002_016", "B12002_017", "B12002_097", "B12002_098", "B12002_099", "B12002_100", "B12002_101", "B12002_102", "B12002_103", "B12002_104", "B12002_105", "B12002_106", "B12002_107", "B12002_108", "B12002_109", "B12002_110"),
+  married = c("B12002_020", "B12002_021", "B12002_022", "B12002_023", "B12002_024", "B12002_025", "B12002_026", "B12002_027", "B12002_028", "B12002_029", "B12002_030", "B12002_031", "B12002_032", "B12002_033", "B12002_113", "B12002_114", "B12002_115", "B12002_116", "B12002_117", "B12002_118", "B12002_119", "B12002_120", "B12002_121", "B12002_122", "B12002_123", "B12002_124", "B12002_125", "B12002_126"),
+  separated = c("B12002_036", "B12002_037", "B12002_038", "B12002_039", "B12002_040", "B12002_041", "B12002_042", "B12002_043", "B12002_044", "B12002_045", "B12002_046", "B12002_047", "B12002_048", "B12002_049", "B12002_129", "B12002_130", "B12002_131", "B12002_132", "B12002_133", "B12002_134", "B12002_135", "B12002_136", "B12002_137", "B12002_138", "B12002_139", "B12002_140", "B12002_141", "B12002_142"),
+  widowed = c("B12002_066", "B12002_067", "B12002_068", "B12002_069", "B12002_070", "B12002_071", "B12002_072", "B12002_073", "B12002_074", "B12002_075", "B12002_076", "B12002_077", "B12002_078", "B12002_079", "B12002_159", "B12002_160", "B12002_161", "B12002_162", "B12002_163", "B12002_164", "B12002_165", "B12002_166", "B12002_167", "B12002_168", "B12002_169", "B12002_170", "B12002_171", "B12002_172"),
+  divorced = c("B12002_081", "B12002_082", "B12002_083", "B12002_084", "B12002_085", "B12002_086", "B12002_087", "B12002_088", "B12002_089", "B12002_090", "B12002_091", "B12002_092", "B12002_093", "B12002_094", "B12002_174", "B12002_175", "B12002_176", "B12002_177", "B12002_178", "B12002_179", "B12002_180", "B12002_181", "B12002_182", "B12002_183", "B12002_184", "B12002_185", "B12002_186", "B12002_187")
+)
+
+# Add age column to marital_status_data
+age_map <- list(
+  "15-17" = c("B12002_004", "B12002_020", "B12002_036", "B12002_066", "B12002_081", "B12002_097", "B12002_113", "B12002_129", "B12002_159", "B12002_174"),
+  "18-19" = c("B12002_005", "B12002_021", "B12002_037", "B12002_067", "B12002_082", "B12002_098", "B12002_114", "B12002_130", "B12002_160", "B12002_175"),
+  "20-24" = c("B12002_006", "B12002_022", "B12002_038", "B12002_068", "B12002_083", "B12002_099", "B12002_115", "B12002_131", "B12002_161", "B12002_176"),
+  "25-29" = c("B12002_007", "B12002_023", "B12002_039", "B12002_069", "B12002_084", "B12002_100", "B12002_116", "B12002_132", "B12002_162", "B12002_177"),
+  "30-34" = c("B12002_008", "B12002_024", "B12002_040", "B12002_070", "B12002_085", "B12002_101", "B12002_117", "B12002_133", "B12002_163", "B12002_178"),
+  "35-39" = c("B12002_009", "B12002_025", "B12002_041", "B12002_071", "B12002_086", "B12002_102", "B12002_118", "B12002_134", "B12002_164", "B12002_179"),
+  "40-44" = c("B12002_010", "B12002_026", "B12002_042", "B12002_072", "B12002_087", "B12002_103", "B12002_119", "B12002_135", "B12002_165", "B12002_180"),
+  "45-49" = c("B12002_011", "B12002_027", "B12002_043", "B12002_073", "B12002_088", "B12002_104", "B12002_120", "B12002_136", "B12002_166", "B12002_181"),
+  "50-54" = c("B12002_012", "B12002_028", "B12002_044", "B12002_074", "B12002_089", "B12002_105", "B12002_121", "B12002_137", "B12002_167", "B12002_182"),
+  "55-59" = c("B12002_013", "B12002_029", "B12002_045", "B12002_075", "B12002_090", "B12002_106", "B12002_122", "B12002_138", "B12002_168", "B12002_183"),
+  "60-64" = c("B12002_014", "B12002_030", "B12002_046", "B12002_076", "B12002_091", "B12002_107", "B12002_123", "B12002_139", "B12002_169", "B12002_184"),
+  "65-74" = c("B12002_015", "B12002_031", "B12002_047", "B12002_077", "B12002_092", "B12002_108", "B12002_124", "B12002_140", "B12002_170", "B12002_185"),
+  "75-84" = c("B12002_016", "B12002_032", "B12002_048", "B12002_078", "B12002_093", "B12002_109", "B12002_125", "B12002_141", "B12002_171", "B12002_186"),
+  "85+" = c("B12002_017", "B12002_033", "B12002_049", "B12002_079", "B12002_094", "B12002_110", "B12002_126", "B12002_142", "B12002_172", "B12002_187")
+)
+
+child_age_map <- list(
+  "0-2" = c("B09002_003", "B09002_010", "B09002_016"),
+  "3-4" = c("B09002_004", "B09002_011", "B09002_017"),
+  "5" = c("B09002_005", "B09002_012", "B09002_018"),
+  "6-11" = c("B09002_006", "B09002_013", "B09002_019"),
+  "12-17" = c("B09002_007", "B09002_014", "B09002_020")
+)
+
+child_parent_map <- list(
+  "Married Couple" = c("B09002_003", "B09002_004", "B09002_005", "B09002_006", "B09002_007"),
+  "Single Parent (Dad)" = c("B09002_010", "B09002_011", "B09002_012", "B09002_013", "B09002_014"),
+  "Single Parent (Mom)" = c("B09002_016", "B09002_017", "B09002_018", "B09002_019", "B09002_020")
+)
+
+# Add the 'sex' column to marital_status_data based on the variable values
+marital_status_data <- marital_status_data %>%
+  mutate(sex = case_when(
+    variable %in% sex_map$Male ~ "M",
+    variable %in% sex_map$Female ~ "F",
+    TRUE ~ NA_character_
+  ))
+
+# Add the 'marital_status' column to marital_status_data based on the variable values
+marital_status_data <- marital_status_data %>%
+  mutate(marital_status = case_when(
+    variable %in% marital_map$neverMarried ~ "Never Married",
+    variable %in% marital_map$married ~ "Married",
+    variable %in% marital_map$separated ~ "Separated",
+    variable %in% marital_map$widowed ~ "Widowed",
+    variable %in% marital_map$divorced ~ "Divorced",
+    TRUE ~ NA_character_
+  ))
+
+# Add the 'age' column to marital_status_data based on the variable values
+marital_status_data <- marital_status_data %>%
+  mutate(age = case_when(
+    variable %in% age_map[["15-17"]] ~ "15-17",
+    variable %in% age_map[["18-19"]] ~ "18-19",
+    variable %in% age_map[["20-24"]] ~ "20-24",
+    variable %in% age_map[["25-29"]] ~ "25-29",
+    variable %in% age_map[["30-34"]] ~ "30-34",
+    variable %in% age_map[["35-39"]] ~ "35-39",
+    variable %in% age_map[["40-44"]] ~ "40-44",
+    variable %in% age_map[["45-49"]] ~ "45-49",
+    variable %in% age_map[["50-54"]] ~ "50-54",
+    variable %in% age_map[["55-59"]] ~ "55-59",
+    variable %in% age_map[["60-64"]] ~ "60-64",
+    variable %in% age_map[["65-74"]] ~ "65-74",
+    variable %in% age_map[["75-84"]] ~ "75-84",
+    variable %in% age_map[["85+"]] ~ "85+",
+    TRUE ~ NA_character_
+  ))
+
+# Add the 'child_age' column to marital_status_children_data based on the variable values
+marital_status_children_data <- marital_status_children_data %>%
+  mutate(child_age = case_when(
+    variable %in% child_age_map[["0-2"]] ~ "00-02",
+    variable %in% child_age_map[["3-4"]] ~ "03-04",
+    variable %in% child_age_map[["5"]] ~ "05",
+    variable %in% child_age_map[["6-11"]] ~ "06-11",
+    variable %in% child_age_map[["12-17"]] ~ "12-17",
+    TRUE ~ NA_character_
+  ))
+
+# Add the 'child_parent' column to marital_status_children_data based on the variable values
+marital_status_children_data <- marital_status_children_data %>%
+  mutate(child_parent = case_when(
+    variable %in% child_parent_map[["Married Couple"]] ~ "Married Couple",
+    variable %in% child_parent_map[["Single Parent (Dad)"]] ~ "Single Parent (Dad)",
+    variable %in% child_parent_map[["Single Parent (Mom)"]] ~ "Single Parent (Mom)",
+    TRUE ~ NA_character_
+  ))
+
+#print the first few rows of the marital_status_data dataframe
+head(marital_status_children_data)
+
+# Rename GEOID columns to st_fips
+marital_status_data <- marital_status_data %>% rename(st_fips = GEOID)
+marital_status_children_data <- marital_status_children_data %>% rename(st_fips = GEOID)
+
+# Rename NAME column to state
+marital_status_data <- marital_status_data %>% rename(state = NAME)
+marital_status_children_data <- marital_status_children_data %>% rename(state = NAME)
+
+# Drop variable column
+marital_status_data <- marital_status_data %>% select(-variable, -X)
+marital_status_children_data <- marital_status_children_data %>% select(-variable, -X)
+
+# View the updated acs_data
+head(marital_status_data)
+head(marital_status_children_data)
+
+# Save processed acs_data as .csv files (for future sessions)
+write.csv(marital_status_data, file = "marital_status_data.csv", row.names = FALSE)
+write.csv(marital_status_children_data, file = "marital_status_children_data.csv", row.names = FALSE)
+```
+
+```{r}
+
+# Load necessary libraries
+library(shiny)
+library(plotly)
+library(dplyr)
+library(scales)  # For comma formatting
+
+# Load the data
+data <- read.csv("marital_status_data.csv")
+data2 <- read.csv("marital_status_children_data.csv")
+
+# Define UI
+ui <- fluidPage(
+  # Main title
+  titlePanel("U.S. Families Data"),
+  
+  # Custom CSS for title size and subtitle styling
+  tags$head(
+    tags$style(HTML("
+      .title-subheading { 
+        font-size: 18px; 
+        font-weight: normal; 
+      }
+    "))
+  ),
+  
+  tabsetPanel(
+    id = "main-tabs",
+    
+    # begin section: Marital Status Tab
+    tabPanel(HTML("<b style='font-size: 16px;'>Marital Status</b>"),
+      fluidPage(
+        titlePanel(div("Marital Status Distribution by Age Group", class = "title-subheading")),
+        sidebarLayout(
+          sidebarPanel(
+            width = 2,  # Resize sidebar to width 2
+            # Year selection only for the "Single Year" tab
+            conditionalPanel(
+              condition = "input.tab_selected == 'Single Year'",
+              uiOutput("year_selector")  # Dynamic UI for year selection
+            ),
+            # Populate the "State" dropdown with "All States" and all unique states from the dataset
+            selectInput("state", "Select State", choices = c("All States", unique(data$state)), selected = "All States"),
+            # Display Mode selection
+            radioButtons("display_mode", "Display Mode", choices = c("Absolute", "Relative"), selected = "Absolute")
+          ),
+          mainPanel(
+            tabsetPanel(
+              id = "tab_selected",
+              tabPanel("Single Year", plotlyOutput("maritalStatusPlot")),
+              tabPanel("Trend Over Time", plotlyOutput("trendPlot"))
+            )
+          )
+        )
+      )
+    ),
+    # end section: Marital Status Tab
+
+  # begin section: Children Data Tab
+  tabPanel(HTML("<b style='font-size: 16px;'>Children Data</b>"), 
+    fluidPage(
+      titlePanel(div("Children Data Visualization", class = "title-subheading")),
+      sidebarLayout(
+        sidebarPanel(
+          width = 2,
+          # Conditional display for the year selector based on active tab
+          conditionalPanel(
+            condition = "input.children_tab_selected == 'Single Year'",
+            uiOutput("children_year_selector")
+          ),
+          # State selector
+          selectInput("children_state", "Select State", choices = c("All States", unique(data2$state)), selected = "All States"),
+          # Display mode selector (Absolute or Relative)
+          radioButtons("children_display_mode", "Display Mode", choices = c("Absolute", "Relative"), selected = "Absolute")
+        ),
+        mainPanel(
+          tabsetPanel(
+            id = "children_tab_selected",  # ID for the tabsetPanel to allow conditional display
+            # Single Year visualization tab
+            tabPanel("Single Year", plotlyOutput("childrenSingleYearPlot")),
+            # Trend Over Time visualization tab with animation (no year selector here)
+            tabPanel("Trend Over Time", plotlyOutput("childrenTrendPlot"))
+          )
+        )
+      )
+    )
+  ),
+  # end section: Children Data Tab
+
+  )
+)
+
+# Define Server
+server <- function(input, output, session) {
+  
+  # begin section: Marital Status Server Logic
+  # Dynamically generate year selection based on data for the "Single Year" tab
+  output$year_selector <- renderUI({
+    selectInput("year", "Select Year", choices = sort(unique(data$year), decreasing = TRUE), selected = max(data$year))
+  })
+
+  output$maritalStatusPlot <- renderPlotly({
+    # Ensure input$year is not NULL before filtering by year
+    if (is.null(input$year)) return(NULL)
+    
+    # Filter data based on selected state and selected year
+    filtered_data <- data %>%
+      filter(year == input$year) %>%
+      filter(if (input$state != "All States") state == input$state else TRUE) %>%
+      group_by(age, marital_status) %>%
+      summarise(total_estimate = sum(estimate, na.rm = TRUE), .groups = "drop") %>%
+      arrange(age)
+
+    # Set y-axis value and hover text based on display mode
+    if (input$display_mode == "Relative") {
+      filtered_data <- filtered_data %>%
+        group_by(age) %>%
+        mutate(total_by_age = sum(total_estimate)) %>%
+        ungroup() %>%
+        mutate(percentage = (total_estimate / total_by_age) * 100)
+      y_value <- ~percentage
+      hover_text <- ~paste("Marital Status:", marital_status,
+                           "<br>Percentage:", round(percentage, 1), "%")
+      y_axis_title <- "Percentage (%)"
+    } else {
+      y_value <- ~total_estimate
+      hover_text <- ~paste("Marital Status:", marital_status,
+                           "<br>Estimate:", comma(total_estimate))
+      y_axis_title <- "Population Estimate"
+    }
+    
+    # Plot for the selected year
+    plot <- plot_ly(
+      data = filtered_data,
+      x = ~age,
+      y = y_value,
+      color = ~marital_status,
+      type = "bar",
+      text = hover_text,
+      hoverinfo = "text",
+      textposition = "none"
+    ) %>%
+      layout(
+        title = paste("Marital Status Distribution in", input$year, "for State", input$state),
+        xaxis = list(title = "Age Group"),
+        yaxis = list(title = y_axis_title),
+        barmode = "stack",
+        margin = list(t = 80)  # Add top margin for spacing
+      )
+    
+    plot
+  })
+  
+  output$trendPlot <- renderPlotly({
+    # Filter data based on selected state and include all years
+    filtered_data <- data %>%
+      filter(if (input$state != "All States") state == input$state else TRUE) %>%
+      group_by(year, age, marital_status) %>%
+      summarise(total_estimate = sum(estimate, na.rm = TRUE), .groups = "drop") %>%
+      arrange(age, year)
+
+    # Set y-axis value and hover text based on display mode
+    if (input$display_mode == "Relative") {
+      filtered_data <- filtered_data %>%
+        group_by(year, age) %>%
+        mutate(total_by_age_year = sum(total_estimate)) %>%
+        ungroup() %>%
+        mutate(percentage = (total_estimate / total_by_age_year) * 100)
+      y_value <- ~percentage
+      hover_text <- ~paste("Year:", year, "<br>Marital Status:", marital_status,
+                           "<br>Percentage:", round(percentage, 1), "%")
+      y_axis_title <- "Percentage (%)"
+    } else {
+      y_value <- ~total_estimate
+      hover_text <- ~paste("Year:", year, "<br>Marital Status:", marital_status,
+                           "<br>Estimate:", comma(total_estimate))
+      y_axis_title <- "Population Estimate"
+    }
+
+    # Plot for trend over time with marital status as stacked bars for each year
+    plot <- plot_ly(
+      data = filtered_data,
+      x = ~age,
+      y = y_value,
+      color = ~marital_status,  # Color by marital status for stacking
+      type = "bar",
+      text = hover_text,
+      hoverinfo = "text",
+      textposition = "none",
+      frame = ~year  # Keep animation by year for dynamic trend visualization
+    ) %>%
+      layout(
+        title = paste("Marital Status Trend Over Time for State", input$state),
+        xaxis = list(title = "Age Group"),
+        yaxis = list(title = y_axis_title),
+        barmode = "stack",  # Stack marital status bars within each year
+        margin = list(t = 80)  # Add top margin for spacing
+      ) %>%
+      animation_opts(frame = 1000, easing = "linear", redraw = FALSE)
+
+    plot
+  })
+  # end section: Marital Status Server Logic
+
+###################################################################################################################################
+
+  # begin section: Children Data Server Logic
+
+  # Render year selector for Children Data
+  output$children_year_selector <- renderUI({
+    selectInput("children_year", "Select Year", choices = sort(unique(data2$year), decreasing = TRUE), selected = max(data2$year))
+  })
+
+  # Render plot for Single Year Children Data
+  output$childrenSingleYearPlot <- renderPlotly({
+    # Check if the year input is NULL before proceeding
+    req(input$children_year, input$children_state)
+
+    # Filter data based on selected year and state
+    filtered_data <- data2 %>%
+      filter(year == input$children_year) %>%
+      filter(if (input$children_state != "All States") state == input$children_state else TRUE) %>%
+      group_by(child_age, child_parent) %>%
+      summarise(total_estimate = sum(estimate, na.rm = TRUE), .groups = "drop") %>%
+      arrange(child_age)
+
+    # Set y-axis value and hover text based on display mode
+    if (input$children_display_mode == "Relative") {
+      filtered_data <- filtered_data %>%
+        group_by(child_age) %>%
+        mutate(total_by_age = sum(total_estimate)) %>%
+        ungroup() %>%
+        mutate(percentage = (total_estimate / total_by_age) * 100)
+      y_value <- ~percentage
+      hover_text <- ~paste("Parental Situation:", child_parent,
+                          "<br>Percentage:", round(percentage, 1), "%")
+      y_axis_title <- "Percentage (%)"
+    } else {
+      y_value <- ~total_estimate
+      hover_text <- ~paste("Parental Situation:", child_parent,
+                          "<br>Estimate:", scales::comma(total_estimate))
+      y_axis_title <- "Population Estimate"
+    }
+    
+    # Plot for Children Data (Single Year)
+    plot <- plot_ly(
+      data = filtered_data,
+      x = ~child_age,
+      y = y_value,
+      color = ~child_parent,
+      type = "bar",
+      text = hover_text,
+      hoverinfo = "text",
+      textposition = "none"
+    ) %>%
+      layout(
+        title = paste("Children Data in", input$children_year, "for State", input$children_state),
+        xaxis = list(title = "Child Age Group"),
+        yaxis = list(title = y_axis_title),
+        barmode = "stack",
+        margin = list(t = 80)  # Add top margin for spacing
+      )
+    
+    plot
+  })
+
+  # Render plot for Trend Over Time Children Data
+  output$childrenTrendPlot <- renderPlotly({
+    # Filter data based on selected state and include all years
+    filtered_data <- data2 %>%
+      filter(if (input$children_state != "All States") state == input$children_state else TRUE) %>%
+      group_by(year, child_age, child_parent) %>%
+      summarise(total_estimate = sum(estimate, na.rm = TRUE), .groups = "drop") %>%
+      arrange(child_age, year)
+
+    # Set y-axis value and hover text based on display mode
+    if (input$children_display_mode == "Relative") {
+      filtered_data <- filtered_data %>%
+        group_by(year, child_age) %>%
+        mutate(total_by_age_year = sum(total_estimate)) %>%
+        ungroup() %>%
+        mutate(percentage = (total_estimate / total_by_age_year) * 100)
+      y_value <- ~percentage
+      hover_text <- ~paste("Year:", year, "<br>Parental Situation:", child_parent,
+                          "<br>Percentage:", round(percentage, 1), "%")
+      y_axis_title <- "Percentage (%)"
+      y_axis_range <- list(range = c(0, 100))  # Set y-axis range to 0-100% for relative display
+    } else {
+      y_value <- ~total_estimate
+      hover_text <- ~paste("Year:", year, "<br>Parental Situation:", child_parent,
+                          "<br>Estimate:", scales::comma(total_estimate))
+      y_axis_title <- "Population Estimate"
+      y_axis_range <- NULL  # No fixed range for absolute display
+    }
+
+    # Plot for Trend Over Time with animation
+    plot <- plot_ly(
+      data = filtered_data,
+      x = ~child_age,
+      y = y_value,
+      color = ~child_parent,
+      type = "bar",
+      text = hover_text,
+      hoverinfo = "text",
+      textposition = "none",
+      frame = ~year  # Animation by year
+    ) %>%
+      layout(
+        title = paste("Children Data Trend Over Time for State", input$children_state),
+        xaxis = list(title = "Child Age Group"),
+        yaxis = list(title = y_axis_title, range = y_axis_range),
+        barmode = "stack",
+        margin = list(t = 80)  # Add top margin for spacing
+      ) %>%
+      animation_opts(frame = 1000, easing = "linear", redraw = FALSE)
+
+    plot
+  })
+
+  # end section: Children Data Server Logic
+  
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+
+
+```
+
+## add (select state / marital status) -> show bar chart by year for each age Group
+
+##############################################################################################
+```{r}
+
+# Save processed acs_data as .csv file (for future sessions)
+
+# Ensure all columns are atomic vectors
+write.csv(acs_data, file = "acs_data.csv", row.names = FALSE)
+
+```
